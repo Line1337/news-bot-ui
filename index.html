@@ -35,28 +35,43 @@
     <button id="save" style="width: 100%; padding: 10px; background: #248b94; color: white; border: none; border-radius: 5px;">Сохранить настройки</button>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
+    let tg = window.Telegram.WebApp;
+    tg.expand();
 
-        function checkSpam() {
-            let freq = document.getElementById('freq').value;
-            document.getElementById('val_freq').innerText = freq;
-            document.getElementById('spam_warn').style.display = freq < 3 ? 'block' : 'none';
-        }
+    // Функция для получения параметров из ссылки
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Если параметры есть в ссылке, ставим их в поля
+    if (urlParams.has('chat_id')) document.getElementById('chat_id').value = urlParams.get('chat_id');
+    if (urlParams.has('freq')) {
+        document.getElementById('freq').value = urlParams.get('freq');
+        document.getElementById('val_freq').innerText = urlParams.get('freq');
+    }
+    if (urlParams.has('count')) {
+        document.getElementById('count').value = urlParams.get('count');
+        document.getElementById('val_count').innerText = urlParams.get('count');
+    }
 
-        document.getElementById('count').oninput = function() {
-            document.getElementById('val_count').innerText = this.value;
+    // Остальной код (checkSpam и сохранение) остается прежним
+    function checkSpam() {
+        let freq = document.getElementById('freq').value;
+        document.getElementById('val_freq').innerText = freq;
+        document.getElementById('spam_warn').style.display = freq < 3 ? 'block' : 'none';
+    }
+
+    document.getElementById('count').oninput = function() {
+        document.getElementById('val_count').innerText = this.value;
+    };
+
+    document.getElementById('save').onclick = function() {
+        let data = {
+            chat_id: document.getElementById('chat_id').value,
+            freq: document.getElementById('freq').value,
+            count: document.getElementById('count').value
         };
-
-        document.getElementById('save').onclick = function() {
-            let data = {
-                chat_id: document.getElementById('chat_id').value,
-                freq: document.getElementById('freq').value,
-                count: document.getElementById('count').value
-            };
-            tg.sendData(JSON.stringify(data)); // Отправляем данные боту
-            tg.close();
-        };
-    </script>
+        tg.sendData(JSON.stringify(data));
+        tg.close();
+    };
+</script>
 </body>
 </html>
