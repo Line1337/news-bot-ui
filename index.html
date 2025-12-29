@@ -11,153 +11,108 @@
             --text: var(--tg-theme-text-color, #222222);
             --hint: var(--tg-theme-hint-color, #999999);
             --button: var(--tg-theme-button-color, #248bed);
-            --button-text: var(--tg-theme-button-text-color, #ffffff);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f7);
+            --secondary: var(--tg-theme-secondary-bg-color, #f4f4f7);
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            user-select: none;
-        }
-
-        .section {
-            background-color: var(--secondary-bg);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .value-display {
-            float: right;
-            color: var(--button);
-            font-weight: bold;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--hint);
-            background-color: var(--bg);
-            color: var(--text);
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            margin-top: 10px;
-            accent-color: var(--button);
-        }
-
-        .hint-text {
-            font-size: 12px;
-            color: var(--hint);
-            margin-top: 8px;
-        }
-
-        button {
-            background-color: var(--button);
-            color: var(--button-text);
-            border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; }
+        .card { background: var(--secondary); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .val { float: right; color: var(--button); }
+        input[type="range"] { width: 100%; accent-color: var(--button); }
+        input[type="text"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--hint); background: var(--bg); color: var(--text); box-sizing: border-box; }
+        .warning { color: #ff3b30; font-size: 11px; margin-top: 5px; display: none; font-weight: bold; }
+        .feed-item { display: flex; justify-content: space-between; background: var(--bg); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 12px; }
+        .del-btn { color: #ff3b30; cursor: pointer; font-weight: bold; }
+        button.main { width: 100%; padding: 15px; background: var(--button); color: white; border: none; border-radius: 12px; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
-
-    <div class="section">
-        <label>ID ЧАТА (Куда слать новости)</label>
-        <input type="text" id="chat_id" placeholder="-1001234567890">
-        <div class="hint-text">Введите ID группы или канала, куда бот будет постить ленту.</div>
+    <div class="card">
+        <label>ID ЧАТА</label>
+        <input type="text" id="target" placeholder="-100...">
     </div>
 
-    <div class="section">
-        <label>ЧАСТОТА ПРОВЕРКИ: <span id="freq_val" class="value-display">30</span> мин</label>
+    <div class="card">
+        <label>ЧАСТОТА ПРОВЕРКИ: <span id="freq_v" class="val">30</span> мин</label>
         <input type="range" id="freq" min="1" max="120" value="30" oninput="updateVal('freq')">
+        <div id="warn_freq" class="warning">⚠️ Слишком часто! Возможен бан за спам.</div>
     </div>
 
-    <div class="section">
-        <label>ПОСТОВ ЗА РАЗ: <span id="count_val" class="value-display">3</span></label>
-        <input type="range" id="count" min="1" max="15" value="3" oninput="updateVal('count')">
+    <div class="card">
+        <label>ПОСТОВ ЗА РАЗ: <span id="count_v" class="val">3</span></label>
+        <input type="range" id="count" min="1" max="10" value="3" oninput="updateVal('count')">
     </div>
 
-    <div class="section">
-        <label>АКТУАЛЬНОСТЬ: <span id="fresh_val" class="value-display">24</span> ч</label>
+    <div class="card">
+        <label>ПАУЗА МЕЖДУ ПОСТАМИ: <span id="delay_v" class="val">5</span> сек</label>
+        <input type="range" id="delay" min="1" max="60" value="5" oninput="updateVal('delay')">
+        <div id="warn_delay" class="warning">⚠️ Малая пауза! Риск блокировки за флуд.</div>
+    </div>
+
+    <div class="card">
+        <label>АКТУАЛЬНОСТЬ: <span id="fresh_v" class="val">24</span> ч</label>
         <input type="range" id="fresh" min="1" max="72" value="24" oninput="updateVal('fresh')">
     </div>
 
-    <button onclick="sendDataToBot()">ПРИМЕНИТЬ НА ПК</button>
+    <div class="card">
+        <label>ИСТОЧНИКИ</label>
+        <div id="feeds_list"></div>
+        <input type="text" id="new_feed" placeholder="Добавить RSS..." style="margin-top:10px">
+        <button onclick="addFeed()" style="margin-top:5px; width:100%">Добавить</button>
+    </div>
+
+    <button class="main" onclick="sendData()">СИНХРОНИЗИРОВАТЬ С ПК</button>
 
     <script>
-        // Инициализация Telegram WebApp
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Развернуть на весь экран
+        tg.expand();
+        let feeds = [];
 
-        // 1. Получаем данные из URL (которые прислал bot.py)
         const params = new URLSearchParams(window.location.search);
-        
-        if (params.has('chat_id')) {
-            document.getElementById('chat_id').value = params.get('chat_id');
-        }
-        if (params.has('freq')) {
-            const f = params.get('freq');
-            document.getElementById('freq').value = f;
-            document.getElementById('freq_val').innerText = f;
-        }
-        if (params.has('count')) {
-            const c = params.get('count');
-            document.getElementById('count').value = c;
-            document.getElementById('count_val').innerText = c;
-        }
-        if (params.has('fresh')) {
-            const s = params.get('fresh');
-            document.getElementById('fresh').value = s;
-            document.getElementById('fresh_val').innerText = s;
+        // Первичная загрузка данных из ПК через URL
+        if(params.has('data')) {
+            const d = JSON.parse(decodeURIComponent(params.get('data')));
+            document.getElementById('target').value = d.target;
+            ['freq', 'count', 'delay', 'fresh'].forEach(k => {
+                document.getElementById(k).value = d[k];
+                updateVal(k);
+            });
+            feeds = d.feeds || [];
+            renderFeeds();
         }
 
-        // 2. Функция обновления цифр при движении ползунка
         function updateVal(id) {
-            const val = document.getElementById(id).value;
-            document.getElementById(id + '_val').innerText = val;
+            const v = document.getElementById(id).value;
+            document.getElementById(id+'_val').innerText = v;
+            // Предупреждения
+            if(id === 'freq') document.getElementById('warn_freq').style.display = v < 5 ? 'block' : 'none';
+            if(id === 'delay') document.getElementById('warn_delay').style.display = v < 3 ? 'block' : 'none';
         }
 
-        // 3. Главная функция: отправка данных боту
-        function sendDataToBot() {
-            const data = {
-                chat_id: document.getElementById('chat_id').value,
-                freq: document.getElementById('freq').value,
-                count: document.getElementById('count').value,
-                fresh: document.getElementById('fresh').value
-            };
+        function renderFeeds() {
+            const container = document.getElementById('feeds_list');
+            container.innerHTML = '';
+            feeds.forEach((f, i) => {
+                container.innerHTML += `<div class="feed-item"><span>${f.substring(0,30)}...</span><span class="del-btn" onclick="delFeed(${i})">УДАЛИТЬ</span></div>`;
+            });
+        }
 
-            // Превращаем объект в строку и отправляем боту
+        function addFeed() {
+            const inp = document.getElementById('new_feed');
+            if(inp.value) { feeds.push(inp.value); inp.value = ''; renderFeeds(); }
+        }
+
+        function delFeed(i) { feeds.splice(i, 1); renderFeeds(); }
+
+        function sendData() {
+            const data = {
+                target: document.getElementById('target').value,
+                freq: parseInt(document.getElementById('freq').value),
+                count: parseInt(document.getElementById('count').value),
+                delay: parseInt(document.getElementById('delay').value),
+                fresh: parseInt(document.getElementById('fresh').value),
+                feeds: feeds
+            };
             tg.sendData(JSON.stringify(data));
-            
-            // Закрываем WebApp
             tg.close();
         }
     </script>
