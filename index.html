@@ -3,62 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Настройки Бота</title>
+    <title>Настройки News Bot</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); padding: 20px; }
-        .card { background: var(--tg-theme-secondary-bg-color, #f0f0f0); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
-        input[type="text"], input[type="range"] { width: 100%; box-sizing: border-box; }
-        input[type="text"] { padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); }
-        .val { float: right; color: var(--tg-theme-button-color, #248bed); }
-        .hint { font-size: 12px; opacity: 0.6; margin-top: 5px; }
-        button { width: 100%; padding: 15px; background: var(--tg-theme-button-color, #248bed); color: var(--tg-theme-button-text-color, #fff); border: none; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        :root {
+            --bg: var(--tg-theme-bg-color, #ffffff);
+            --text: var(--tg-theme-text-color, #222222);
+            --hint: var(--tg-theme-hint-color, #999999);
+            --button: var(--tg-theme-button-color, #248bed);
+            --button-text: var(--tg-theme-button-text-color, #ffffff);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f7);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        .section {
+            background-color: var(--secondary-bg);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .value-display {
+            float: right;
+            color: var(--button);
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--hint);
+            background-color: var(--bg);
+            color: var(--text);
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-top: 10px;
+            accent-color: var(--button);
+        }
+
+        .hint-text {
+            font-size: 12px;
+            color: var(--hint);
+            margin-top: 8px;
+        }
+
+        button {
+            background-color: var(--button);
+            color: var(--button-text);
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <label>ID целевого чата</label>
-        <input type="text" id="chat_id" placeholder="-100...">
-        <div class="hint">ID группы или канала для рассылки</div>
+
+    <div class="section">
+        <label>ID ЧАТА (Куда слать новости)</label>
+        <input type="text" id="chat_id" placeholder="-1001234567890">
+        <div class="hint-text">Введите ID группы или канала, куда бот будет постить ленту.</div>
     </div>
 
-    <div class="card">
-        <label>Интервал: <span id="freq_v" class="val">30</span> мин</label>
-        <input type="range" id="freq" min="1" max="60" value="30" oninput="document.getElementById('freq_v').innerText=this.value">
+    <div class="section">
+        <label>ЧАСТОТА ПРОВЕРКИ: <span id="freq_val" class="value-display">30</span> мин</label>
+        <input type="range" id="freq" min="1" max="120" value="30" oninput="updateVal('freq')">
     </div>
 
-    <div class="card">
-        <label>Постов за раз: <span id="count_v" class="val">3</span></label>
-        <input type="range" id="count" min="1" max="10" value="3" oninput="document.getElementById('count_v').innerText=this.value">
+    <div class="section">
+        <label>ПОСТОВ ЗА РАЗ: <span id="count_val" class="value-display">3</span></label>
+        <input type="range" id="count" min="1" max="15" value="3" oninput="updateVal('count')">
     </div>
 
-    <div class="card">
-        <label>Актуальность: <span id="fresh_v" class="val">24</span> ч</label>
-        <input type="range" id="fresh" min="1" max="48" value="24" oninput="document.getElementById('fresh_v').innerText=this.value">
+    <div class="section">
+        <label>АКТУАЛЬНОСТЬ: <span id="fresh_val" class="value-display">24</span> ч</label>
+        <input type="range" id="fresh" min="1" max="72" value="24" oninput="updateVal('fresh')">
     </div>
 
-    <button onclick="sendData()">ПРИМЕНИТЬ НА ПК</button>
+    <button onclick="sendDataToBot()">ПРИМЕНИТЬ НА ПК</button>
 
     <script>
+        // Инициализация Telegram WebApp
         const tg = window.Telegram.WebApp;
-        tg.expand();
+        tg.expand(); // Развернуть на весь экран
 
-        // Заполняем данные из URL при открытии
+        // 1. Получаем данные из URL (которые прислал bot.py)
         const params = new URLSearchParams(window.location.search);
-        if(params.has('chat_id')) document.getElementById('chat_id').value = params.get('chat_id');
-        if(params.has('freq')) { document.getElementById('freq').value = params.get('freq'); document.getElementById('freq_v').innerText = params.get('freq'); }
-        if(params.has('count')) { document.getElementById('count').value = params.get('count'); document.getElementById('count_v').innerText = params.get('count'); }
-        if(params.has('fresh')) { document.getElementById('fresh').value = params.get('fresh'); document.getElementById('fresh_v').innerText = params.get('fresh'); }
+        
+        if (params.has('chat_id')) {
+            document.getElementById('chat_id').value = params.get('chat_id');
+        }
+        if (params.has('freq')) {
+            const f = params.get('freq');
+            document.getElementById('freq').value = f;
+            document.getElementById('freq_val').innerText = f;
+        }
+        if (params.has('count')) {
+            const c = params.get('count');
+            document.getElementById('count').value = c;
+            document.getElementById('count_val').innerText = c;
+        }
+        if (params.has('fresh')) {
+            const s = params.get('fresh');
+            document.getElementById('fresh').value = s;
+            document.getElementById('fresh_val').innerText = s;
+        }
 
-        function sendData() {
+        // 2. Функция обновления цифр при движении ползунка
+        function updateVal(id) {
+            const val = document.getElementById(id).value;
+            document.getElementById(id + '_val').innerText = val;
+        }
+
+        // 3. Главная функция: отправка данных боту
+        function sendDataToBot() {
             const data = {
                 chat_id: document.getElementById('chat_id').value,
                 freq: document.getElementById('freq').value,
                 count: document.getElementById('count').value,
                 fresh: document.getElementById('fresh').value
             };
+
+            // Превращаем объект в строку и отправляем боту
             tg.sendData(JSON.stringify(data));
+            
+            // Закрываем WebApp
+            tg.close();
         }
     </script>
 </body>
