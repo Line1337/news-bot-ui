@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); padding: 20px; }
+        .item { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"], input[type="range"] { width: 100%; box-sizing: border-box; }
+        .warning { color: #ff4444; font-size: 0.8em; display: none; margin-top: 5px; }
+        .hint { font-size: 0.8em; opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <h3>Настройки агрегатора</h3>
+    
+    <div class="item">
+        <label>ID Группы / Токен</label>
+        <input type="text" id="chat_id" placeholder="-100xxxxxxx">
+    </div>
+
+    <div class="item">
+        <label>Частота проверки (минуты): <span id="val_freq">5</span></label>
+        <input type="range" id="freq" min="1" max="60" value="5" oninput="checkSpam()">
+        <div id="spam_warn" class="warning">⚠️ Слишком часто! Возможен спам-блок.</div>
+    </div>
+
+    <div class="item">
+        <label>Постов за раз: <span id="val_count">3</span></label>
+        <input type="range" id="count" min="1" max="10" value="3">
+    </div>
+
+    <button id="save" style="width: 100%; padding: 10px; background: #248b94; color: white; border: none; border-radius: 5px;">Сохранить настройки</button>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        function checkSpam() {
+            let freq = document.getElementById('freq').value;
+            document.getElementById('val_freq').innerText = freq;
+            document.getElementById('spam_warn').style.display = freq < 3 ? 'block' : 'none';
+        }
+
+        document.getElementById('count').oninput = function() {
+            document.getElementById('val_count').innerText = this.value;
+        };
+
+        document.getElementById('save').onclick = function() {
+            let data = {
+                chat_id: document.getElementById('chat_id').value,
+                freq: document.getElementById('freq').value,
+                count: document.getElementById('count').value
+            };
+            tg.sendData(JSON.stringify(data)); // Отправляем данные боту
+            tg.close();
+        };
+    </script>
+</body>
+</html>
