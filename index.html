@@ -6,66 +6,67 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: sans-serif; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); padding: 20px; }
-        .item { margin-bottom: 20px; }
+        .item { margin-bottom: 20px; padding: 10px; border-bottom: 1px solid rgba(122,122,122,0.2); }
         label { display: block; margin-bottom: 8px; font-weight: bold; }
-        input[type="text"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; background: var(--tg-theme-secondary-bg-color); color: var(--tg-theme-text-color); }
         input[type="range"] { width: 100%; margin-top: 10px; }
-        .warning { color: #ff4444; font-size: 0.8em; display: none; margin-top: 5px; }
-        button { width: 100%; padding: 12px; background: #31b545; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .val { color: #31b545; font-weight: bold; float: right; }
+        button { width: 100%; padding: 15px; background: #31b545; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <h3>Настройки новостей</h3>
+    <h3>Настройки агрегатора</h3>
     
     <div class="item">
         <label>ID Группы (с -100)</label>
-        <input type="text" id="chat_id" placeholder="-100123456789">
+        <input type="text" id="chat_id" placeholder="-100xxxxxxxxx">
     </div>
 
     <div class="item">
-        <label>Проверка каждые (мин): <span id="val_freq">5</span></label>
-        <input type="range" id="freq" min="1" max="60" value="5">
-        <div id="spam_warn" class="warning">⚠️ Слишком часто! Возможен спам-блок.</div>
+        <label>Проверка каждые (мин) <span class="val" id="val_freq">5</span></label>
+        <input type="range" id="freq" min="1" max="120" value="5">
     </div>
 
     <div class="item">
-        <label>Постов за раз: <span id="val_count">3</span></label>
-        <input type="range" id="count" min="1" max="10" value="3">
+        <label>Лимит постов за раз <span class="val" id="val_count">3</span></label>
+        <input type="range" id="count" min="1" max="20" value="3">
     </div>
 
-    <button id="save">Сохранить и применить</button>
+    <div class="item">
+        <label>Актуальность (часов) <span class="val" id="val_fresh">24</span></label>
+        <input type="range" id="fresh" min="1" max="72" value="24">
+        <p style="font-size: 0.8em; opacity: 0.6;">Игнорировать посты старее этого времени</p>
+    </div>
+
+    <button id="save">СОХРАНИТЬ НАСТРОЙКИ</button>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Читаем параметры из URL
         const params = new URLSearchParams(window.location.search);
         if (params.has('chat_id')) document.getElementById('chat_id').value = params.get('chat_id');
-        if (params.has('freq')) {
-            document.getElementById('freq').value = params.get('freq');
-            document.getElementById('val_freq').innerText = params.get('freq');
-        }
-        if (params.has('count')) {
-            document.getElementById('count').value = params.get('count');
-            document.getElementById('val_count').innerText = params.get('count');
+        
+        function sync(id) {
+            if (params.has(id)) {
+                document.getElementById(id).value = params.get(id);
+                document.getElementById('val_' + id).innerText = params.get(id);
+            }
+            document.getElementById(id).oninput = function() {
+                document.getElementById('val_' + id).innerText = this.value;
+            };
         }
 
-        // Обновление цифр при движении ползунков
-        document.getElementById('freq').oninput = function() {
-            document.getElementById('val_freq').innerText = this.value;
-            document.getElementById('spam_warn').style.display = this.value < 3 ? 'block' : 'none';
-        };
-        document.getElementById('count').oninput = function() {
-            document.getElementById('val_count').innerText = this.value;
-        };
+        sync('freq');
+        sync('count');
+        sync('fresh');
 
-        // Отправка данных боту
         document.getElementById('save').onclick = function() {
             let data = {
                 chat_id: document.getElementById('chat_id').value,
                 freq: document.getElementById('freq').value,
-                count: document.getElementById('count').value
+                count: document.getElementById('count').value,
+                fresh: document.getElementById('fresh').value
             };
             tg.sendData(JSON.stringify(data));
         };
