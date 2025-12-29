@@ -1,105 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки Бота</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); padding: 15px; margin: 0; }
-        .card { background: var(--tg-theme-secondary-bg-color); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.9em; opacity: 0.8; }
-        input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); }
-        .val { color: #31b545; font-weight: bold; float: right; }
-        button { width: 100%; padding: 15px; background: #31b545; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .feed-item { display: flex; justify-content: space-between; align-items: center; background: var(--tg-theme-bg-color); padding: 8px 12px; border-radius: 6px; margin-bottom: 5px; font-size: 0.8em; border: 1px solid rgba(122,122,122,0.2); }
-        .btn-del { color: #ff4444; font-weight: bold; cursor: pointer; padding: 5px; }
-        .btn-add { background: #64b5f6; margin-top: 10px; padding: 10px; font-size: 0.9em; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
+        .card { background: #2b2b2b; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        input[type="range"] { width: 100%; margin: 10px 0; }
+        .val { color: #0088cc; font-weight: bold; float: right; }
+        button { width: 100%; padding: 12px; background: #0088cc; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
+    <h2>⚙️ Настройки</h2>
+
     <div class="card">
-        <label>ID Группы (с -100)</label>
-        <input type="text" id="chat_id" placeholder="-100xxxxxxxxx">
+        <label>ID чата: <input type="text" id="chat_id" style="background:none; border:none; color:#888; width:100%"></label>
     </div>
 
     <div class="card">
-        <label>Проверка (мин) <span class="val" id="val_freq">5</span></label>
-        <input type="range" id="freq" min="1" max="120" style="width:100%">
-        <label style="margin-top:10px">Постов за раз <span class="val" id="val_count">3</span></label>
-        <input type="range" id="count" min="1" max="15" style="width:100%">
-        <label style="margin-top:10px">Актуальность (ч) <span class="val" id="val_fresh">24</span></label>
-        <input type="range" id="fresh" min="1" max="72" style="width:100%">
+        Интервал: <span id="freq-val" class="val">5</span> мин.
+        <input type="range" id="freq" min="1" max="60" value="5" oninput="document.getElementById('freq-val').innerText=this.value">
     </div>
 
     <div class="card">
-        <label>RSS Источники</label>
-        <div id="feeds_list"></div>
-        <input type="text" id="new_feed" placeholder="https://site.com/rss" style="margin-top:10px">
-        <button class="btn-add" onclick="addFeed()">+ Добавить ленту</button>
+        Постов за раз: <span id="count-val" class="val">3</span>
+        <input type="range" id="count" min="1" max="10" value="3" oninput="document.getElementById('count-val').innerText=this.value">
     </div>
 
-    <button id="save" style="margin-bottom: 30px;">СОХРАНИТЬ ВСЁ</button>
+    <div class="card">
+        Актуальность: <span id="fresh-val" class="val">24</span> ч.
+        <input type="range" id="fresh" min="1" max="48" value="24" oninput="document.getElementById('fresh-val').innerText=this.value">
+    </div>
+
+    <button id="save">СОХРАНИТЬ</button>
 
     <script>
-        let tg = window.Telegram.WebApp;
+        const tg = window.Telegram.WebApp;
         tg.expand();
-        let feeds = [];
 
+        // СИНХРОНИЗАЦИЯ: Получаем данные из URL (которые передал бот)
         const params = new URLSearchParams(window.location.search);
         
-        // Загрузка существующих лент из URL
-        if (params.has('feeds')) {
-            feeds = JSON.parse(decodeURIComponent(params.get('feeds')));
-            renderFeeds();
-        }
-
-        function renderFeeds() {
-            const container = document.getElementById('feeds_list');
-            container.innerHTML = '';
-            feeds.forEach((url, index) => {
-                container.innerHTML += `<div class="feed-item">
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%;">${url}</span>
-                    <span class="btn-del" onclick="removeFeed(${index})">✕</span>
-                </div>`;
-            });
-        }
-
-        function addFeed() {
-            const input = document.getElementById('new_feed');
-            if (input.value.includes('http')) {
-                feeds.push(input.value);
-                input.value = '';
-                renderFeeds();
+        if(params.has('chat_id')) document.getElementById('chat_id').value = params.get('chat_id');
+        
+        const fields = ['freq', 'count', 'fresh'];
+        fields.forEach(field => {
+            if(params.has(field)) {
+                const val = params.get(field);
+                document.getElementById(field).value = val;
+                document.getElementById(field + '-val').innerText = val;
             }
-        }
+        });
 
-        function removeFeed(index) {
-            feeds.splice(index, 1);
-            renderFeeds();
-        }
-
-        function sync(id) {
-            if (params.has(id)) {
-                document.getElementById(id).value = params.get(id);
-                document.getElementById('val_' + id).innerText = params.get(id);
-            }
-            document.getElementById(id).oninput = function() {
-                document.getElementById('val_' + id).innerText = this.value;
-            };
-        }
-
-        document.getElementById('chat_id').value = params.get('chat_id') || '';
-        sync('freq'); sync('count'); sync('fresh');
-
-        document.getElementById('save').onclick = function() {
-            tg.sendData(JSON.stringify({
+        // ОТПРАВКА: Возвращаем данные боту
+        document.getElementById('save').addEventListener('click', () => {
+            const data = {
                 chat_id: document.getElementById('chat_id').value,
                 freq: document.getElementById('freq').value,
                 count: document.getElementById('count').value,
                 fresh: document.getElementById('fresh').value,
-                feeds: feeds
-            }));
-        };
+                feeds: JSON.parse(decodeURIComponent(params.get('feeds') || '[]'))
+            };
+            tg.sendData(json.stringify(data));
+            tg.close();
+        });
     </script>
 </body>
 </html>
