@@ -5,48 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); padding: 20px; }
-        .item { margin-bottom: 20px; padding: 10px; border-bottom: 1px solid rgba(122,122,122,0.2); }
-        label { display: block; margin-bottom: 8px; font-weight: bold; }
-        input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; background: var(--tg-theme-secondary-bg-color); color: var(--tg-theme-text-color); }
-        input[type="range"] { width: 100%; margin-top: 10px; }
+        body { font-family: sans-serif; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); padding: 15px; margin: 0; }
+        .card { background: var(--tg-theme-secondary-bg-color); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.9em; opacity: 0.8; }
+        input[type="text"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); }
         .val { color: #31b545; font-weight: bold; float: right; }
-        button { width: 100%; padding: 15px; background: #31b545; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        button { width: 100%; padding: 15px; background: #31b545; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .feed-item { display: flex; justify-content: space-between; align-items: center; background: var(--tg-theme-bg-color); padding: 8px 12px; border-radius: 6px; margin-bottom: 5px; font-size: 0.8em; border: 1px solid rgba(122,122,122,0.2); }
+        .btn-del { color: #ff4444; font-weight: bold; cursor: pointer; padding: 5px; }
+        .btn-add { background: #64b5f6; margin-top: 10px; padding: 10px; font-size: 0.9em; }
     </style>
 </head>
 <body>
-    <h3>Настройки агрегатора</h3>
-    
-    <div class="item">
+    <div class="card">
         <label>ID Группы (с -100)</label>
         <input type="text" id="chat_id" placeholder="-100xxxxxxxxx">
     </div>
 
-    <div class="item">
-        <label>Проверка каждые (мин) <span class="val" id="val_freq">5</span></label>
-        <input type="range" id="freq" min="1" max="120" value="5">
+    <div class="card">
+        <label>Проверка (мин) <span class="val" id="val_freq">5</span></label>
+        <input type="range" id="freq" min="1" max="120" style="width:100%">
+        <label style="margin-top:10px">Постов за раз <span class="val" id="val_count">3</span></label>
+        <input type="range" id="count" min="1" max="15" style="width:100%">
+        <label style="margin-top:10px">Актуальность (ч) <span class="val" id="val_fresh">24</span></label>
+        <input type="range" id="fresh" min="1" max="72" style="width:100%">
     </div>
 
-    <div class="item">
-        <label>Лимит постов за раз <span class="val" id="val_count">3</span></label>
-        <input type="range" id="count" min="1" max="20" value="3">
+    <div class="card">
+        <label>RSS Источники</label>
+        <div id="feeds_list"></div>
+        <input type="text" id="new_feed" placeholder="https://site.com/rss" style="margin-top:10px">
+        <button class="btn-add" onclick="addFeed()">+ Добавить ленту</button>
     </div>
 
-    <div class="item">
-        <label>Актуальность (часов) <span class="val" id="val_fresh">24</span></label>
-        <input type="range" id="fresh" min="1" max="72" value="24">
-        <p style="font-size: 0.8em; opacity: 0.6;">Игнорировать посты старее этого времени</p>
-    </div>
-
-    <button id="save">СОХРАНИТЬ НАСТРОЙКИ</button>
+    <button id="save" style="margin-bottom: 30px;">СОХРАНИТЬ ВСЁ</button>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+        let feeds = [];
 
         const params = new URLSearchParams(window.location.search);
-        if (params.has('chat_id')) document.getElementById('chat_id').value = params.get('chat_id');
         
+        // Загрузка существующих лент из URL
+        if (params.has('feeds')) {
+            feeds = JSON.parse(decodeURIComponent(params.get('feeds')));
+            renderFeeds();
+        }
+
+        function renderFeeds() {
+            const container = document.getElementById('feeds_list');
+            container.innerHTML = '';
+            feeds.forEach((url, index) => {
+                container.innerHTML += `<div class="feed-item">
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%;">${url}</span>
+                    <span class="btn-del" onclick="removeFeed(${index})">✕</span>
+                </div>`;
+            });
+        }
+
+        function addFeed() {
+            const input = document.getElementById('new_feed');
+            if (input.value.includes('http')) {
+                feeds.push(input.value);
+                input.value = '';
+                renderFeeds();
+            }
+        }
+
+        function removeFeed(index) {
+            feeds.splice(index, 1);
+            renderFeeds();
+        }
+
         function sync(id) {
             if (params.has(id)) {
                 document.getElementById(id).value = params.get(id);
@@ -57,18 +88,17 @@
             };
         }
 
-        sync('freq');
-        sync('count');
-        sync('fresh');
+        document.getElementById('chat_id').value = params.get('chat_id') || '';
+        sync('freq'); sync('count'); sync('fresh');
 
         document.getElementById('save').onclick = function() {
-            let data = {
+            tg.sendData(JSON.stringify({
                 chat_id: document.getElementById('chat_id').value,
                 freq: document.getElementById('freq').value,
                 count: document.getElementById('count').value,
-                fresh: document.getElementById('fresh').value
-            };
-            tg.sendData(JSON.stringify(data));
+                fresh: document.getElementById('fresh').value,
+                feeds: feeds
+            }));
         };
     </script>
 </body>
