@@ -2,77 +2,61 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Настройки Бота</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Настройки</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: #121212; color: #e0e0e0; padding: 20px; }
-        .card { background: #1e1e1e; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
-        input[type="range"] { width: 100%; margin: 15px 0; accent-color: #0088cc; }
-        .val { color: #00aaff; font-weight: bold; float: right; font-size: 1.2em; }
-        button { width: 100%; padding: 16px; background: #0088cc; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
-        input[type="text"] { width: 90%; background: #222; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; margin-top: 5px; }
+        body { font-family: -apple-system, sans-serif; background: #000; color: #fff; padding: 15px; }
+        .card { background: #1c1c1e; padding: 20px; border-radius: 15px; margin-bottom: 15px; }
+        .label-group { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .val { color: #007aff; font-weight: bold; font-size: 1.2em; }
+        input[type="range"] { width: 100%; accent-color: #007aff; margin: 10px 0; }
+        input[type="text"] { width: 100%; background: #2c2c2e; border: 1px solid #3a3a3c; color: #fff; padding: 12px; border-radius: 10px; box-sizing: border-box; }
+        button { width: 100%; padding: 18px; background: #007aff; border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 17px; margin-top: 20px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <label>ID Телеграм Чата:</label>
+        <label>ID Чата</label><br><br>
         <input type="text" id="chat_id" placeholder="-100...">
     </div>
-
     <div class="card">
-        Интервал: <span id="freq-val" class="val">--</span> мин.
+        <div class="label-group"><span>Интервал</span><span id="freq-val" class="val">--</span></div>
         <input type="range" id="freq" min="1" max="60">
     </div>
-
     <div class="card">
-        Постов за раз: <span id="count-val" class="val">--</span>
+        <div class="label-group"><span>Постов за раз</span><span id="count-val" class="val">--</span></div>
         <input type="range" id="count" min="1" max="10">
     </div>
-
     <div class="card">
-        Актуальность: <span id="fresh-val" class="val">--</span> ч.
+        <div class="label-group"><span>Актуальность (ч)</span><span id="fresh-val" class="val">--</span></div>
         <input type="range" id="fresh" min="1" max="48">
     </div>
-
     <button id="save">ПРИМЕНИТЬ НА ПК</button>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
-
         const params = new URLSearchParams(window.location.search);
-        
-        function initSlider(id) {
-            const el = document.getElementById(id);
-            const display = document.getElementById(id + '-val');
-            
-            if (params.has(id)) {
-                const value = params.get(id);
-                el.value = value;
-                display.innerText = value;
-            }
-            
-            el.oninput = function() {
-                display.innerText = this.value;
-            }
+
+        function setup(id, unit = "") {
+            const s = document.getElementById(id);
+            const l = document.getElementById(id + '-val');
+            if (params.has(id)) { s.value = params.get(id); l.innerText = s.value + unit; }
+            s.oninput = () => { l.innerText = s.value + unit; }
         }
 
-        window.onload = function() {
-            document.getElementById('chat_id').value = params.get('chat_id') || '0';
-            initSlider('freq');
-            initSlider('count');
-            initSlider('fresh');
+        window.onload = () => {
+            document.getElementById('chat_id').value = params.get('chat_id') || '';
+            setup('freq', ' м.'); setup('count'); setup('fresh', ' ч.');
         };
 
-        document.getElementById('save').onclick = function() {
-            const result = {
+        document.getElementById('save').onclick = () => {
+            tg.sendData(JSON.stringify({
                 chat_id: document.getElementById('chat_id').value,
                 freq: document.getElementById('freq').value,
                 count: document.getElementById('count').value,
                 fresh: document.getElementById('fresh').value
-            };
-            tg.sendData(JSON.stringify(result));
+            }));
             tg.close();
         };
     </script>
