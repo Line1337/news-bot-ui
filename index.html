@@ -16,10 +16,7 @@
     </style>
 </head>
 <body>
-    <div class="card">
-        <label>ID Чата</label><br><br>
-        <input type="text" id="chat_id" placeholder="-100...">
-    </div>
+    <div class="card"><label>ID Чата</label><br><br><input type="text" id="chat_id"></div>
     <div class="card">
         <div class="label-group"><span>Интервал</span><span id="freq-val" class="val">--</span></div>
         <input type="range" id="freq" min="1" max="60">
@@ -29,7 +26,7 @@
         <input type="range" id="count" min="1" max="10">
     </div>
     <div class="card">
-        <div class="label-group"><span>Актуальность (ч)</span><span id="fresh-val" class="val">--</span></div>
+        <div class="label-group"><span>Актуальность</span><span id="fresh-val" class="val">--</span></div>
         <input type="range" id="fresh" min="1" max="48">
     </div>
     <button id="save">ПРИМЕНИТЬ НА ПК</button>
@@ -37,19 +34,15 @@
     <script>
         const tg = window.Telegram.WebApp;
         const params = new URLSearchParams(window.location.search);
-
         function setup(id, unit = "") {
-            const s = document.getElementById(id);
-            const l = document.getElementById(id + '-val');
+            const s = document.getElementById(id); const l = document.getElementById(id + '-val');
             if (params.has(id)) { s.value = params.get(id); l.innerText = s.value + unit; }
             s.oninput = () => { l.innerText = s.value + unit; }
         }
-
         window.onload = () => {
             document.getElementById('chat_id').value = params.get('chat_id') || '';
             setup('freq', ' м.'); setup('count'); setup('fresh', ' ч.');
         };
-
         document.getElementById('save').onclick = () => {
             tg.sendData(JSON.stringify({
                 chat_id: document.getElementById('chat_id').value,
