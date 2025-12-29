@@ -3,70 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Настройки Бота</title>
+    <title>Настройки</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
         .card { background: #2b2b2b; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        input[type="range"] { width: 100%; margin: 10px 0; }
-        .val { color: #0088cc; font-weight: bold; float: right; }
-        button { width: 100%; padding: 12px; background: #0088cc; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+        input[type="range"] { width: 100%; margin: 10px 0; cursor: pointer; }
+        .val { color: #0088cc; font-weight: bold; float: right; font-size: 1.2em; }
+        button { width: 100%; padding: 15px; background: #0088cc; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        input[type="text"] { width: 100%; background: #333; border: 1px solid #444; color: white; padding: 8px; border-radius: 5px; margin-top: 5px; }
     </style>
 </head>
 <body>
-    <h2>⚙️ Настройки</h2>
-
     <div class="card">
-        <label>ID чата: <input type="text" id="chat_id" style="background:none; border:none; color:#888; width:100%"></label>
+        <label>ID чата:</label>
+        <input type="text" id="chat_id">
     </div>
 
     <div class="card">
-        Интервал: <span id="freq-val" class="val">5</span> мин.
-        <input type="range" id="freq" min="1" max="60" value="5" oninput="document.getElementById('freq-val').innerText=this.value">
+        Интервал: <span id="freq-val" class="val">--</span> мин.
+        <input type="range" id="freq" min="1" max="60" step="1">
     </div>
 
     <div class="card">
-        Постов за раз: <span id="count-val" class="val">3</span>
-        <input type="range" id="count" min="1" max="10" value="3" oninput="document.getElementById('count-val').innerText=this.value">
+        Постов за раз: <span id="count-val" class="val">--</span>
+        <input type="range" id="count" min="1" max="10" step="1">
     </div>
 
     <div class="card">
-        Актуальность: <span id="fresh-val" class="val">24</span> ч.
-        <input type="range" id="fresh" min="1" max="48" value="24" oninput="document.getElementById('fresh-val').innerText=this.value">
+        Актуальность: <span id="fresh-val" class="val">--</span> ч.
+        <input type="range" id="fresh" min="1" max="48" step="1">
     </div>
 
-    <button id="save">СОХРАНИТЬ</button>
+    <button id="save">ПРИМЕНИТЬ НА ПК</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.ready();
 
-        // СИНХРОНИЗАЦИЯ: Получаем данные из URL (которые передал бот)
         const params = new URLSearchParams(window.location.search);
         
-        if(params.has('chat_id')) document.getElementById('chat_id').value = params.get('chat_id');
-        
-        const fields = ['freq', 'count', 'fresh'];
-        fields.forEach(field => {
-            if(params.has(field)) {
-                const val = params.get(field);
-                document.getElementById(field).value = val;
-                document.getElementById(field + '-val').innerText = val;
+        // Функция синхронизации ползунка с текстом
+        function sync(id) {
+            const el = document.getElementById(id);
+            const display = document.getElementById(id + '-val');
+            if (params.has(id)) {
+                el.value = params.get(id);
+                display.innerText = params.get(id);
             }
-        });
+            el.oninput = function() { display.innerText = this.value; }
+        }
 
-        // ОТПРАВКА: Возвращаем данные боту
-        document.getElementById('save').addEventListener('click', () => {
-            const data = {
+        // Инициализация
+        document.getElementById('chat_id').value = params.get('chat_id') || '0';
+        sync('freq');
+        sync('count');
+        sync('fresh');
+
+        document.getElementById('save').onclick = function() {
+            const payload = {
                 chat_id: document.getElementById('chat_id').value,
                 freq: document.getElementById('freq').value,
                 count: document.getElementById('count').value,
-                fresh: document.getElementById('fresh').value,
-                feeds: JSON.parse(decodeURIComponent(params.get('feeds') || '[]'))
+                fresh: document.getElementById('fresh').value
             };
-            tg.sendData(json.stringify(data));
-            tg.close();
-        });
+            tg.sendData(JSON.stringify(payload));
+        };
     </script>
 </body>
 </html>
