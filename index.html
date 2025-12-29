@@ -3,55 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Настройки</title>
+    <title>Настройки Бота</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #000; color: #fff; padding: 15px; }
-        .card { background: #1c1c1e; padding: 20px; border-radius: 15px; margin-bottom: 15px; }
-        .label-group { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .val { color: #007aff; font-weight: bold; font-size: 1.2em; }
-        input[type="range"] { width: 100%; accent-color: #007aff; margin: 10px 0; }
-        input[type="text"] { width: 100%; background: #2c2c2e; border: 1px solid #3a3a3c; color: #fff; padding: 12px; border-radius: 10px; box-sizing: border-box; }
-        button { width: 100%; padding: 18px; background: #007aff; border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 17px; margin-top: 20px; }
+        body { font-family: sans-serif; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); padding: 20px; }
+        .card { background: var(--tg-theme-secondary-bg-color, #f0f0f0); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
+        input[type="text"], input[type="range"] { width: 100%; box-sizing: border-box; }
+        input[type="text"] { padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); }
+        .val { float: right; color: var(--tg-theme-button-color, #248bed); }
+        .hint { font-size: 12px; opacity: 0.6; margin-top: 5px; }
+        button { width: 100%; padding: 15px; background: var(--tg-theme-button-color, #248bed); color: var(--tg-theme-button-text-color, #fff); border: none; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="card"><label>ID Чата</label><br><br><input type="text" id="chat_id"></div>
     <div class="card">
-        <div class="label-group"><span>Интервал</span><span id="freq-val" class="val">--</span></div>
-        <input type="range" id="freq" min="1" max="60">
+        <label>ID целевого чата</label>
+        <input type="text" id="chat_id" placeholder="-100...">
+        <div class="hint">ID группы или канала для рассылки</div>
     </div>
+
     <div class="card">
-        <div class="label-group"><span>Постов за раз</span><span id="count-val" class="val">--</span></div>
-        <input type="range" id="count" min="1" max="10">
+        <label>Интервал: <span id="freq_v" class="val">30</span> мин</label>
+        <input type="range" id="freq" min="1" max="60" value="30" oninput="document.getElementById('freq_v').innerText=this.value">
     </div>
+
     <div class="card">
-        <div class="label-group"><span>Актуальность</span><span id="fresh-val" class="val">--</span></div>
-        <input type="range" id="fresh" min="1" max="48">
+        <label>Постов за раз: <span id="count_v" class="val">3</span></label>
+        <input type="range" id="count" min="1" max="10" value="3" oninput="document.getElementById('count_v').innerText=this.value">
     </div>
-    <button id="save">ПРИМЕНИТЬ НА ПК</button>
+
+    <div class="card">
+        <label>Актуальность: <span id="fresh_v" class="val">24</span> ч</label>
+        <input type="range" id="fresh" min="1" max="48" value="24" oninput="document.getElementById('fresh_v').innerText=this.value">
+    </div>
+
+    <button onclick="sendData()">ПРИМЕНИТЬ НА ПК</button>
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Заполняем данные из URL при открытии
         const params = new URLSearchParams(window.location.search);
-        function setup(id, unit = "") {
-            const s = document.getElementById(id); const l = document.getElementById(id + '-val');
-            if (params.has(id)) { s.value = params.get(id); l.innerText = s.value + unit; }
-            s.oninput = () => { l.innerText = s.value + unit; }
-        }
-        window.onload = () => {
-            document.getElementById('chat_id').value = params.get('chat_id') || '';
-            setup('freq', ' м.'); setup('count'); setup('fresh', ' ч.');
-        };
-        document.getElementById('save').onclick = () => {
-            tg.sendData(JSON.stringify({
+        if(params.has('chat_id')) document.getElementById('chat_id').value = params.get('chat_id');
+        if(params.has('freq')) { document.getElementById('freq').value = params.get('freq'); document.getElementById('freq_v').innerText = params.get('freq'); }
+        if(params.has('count')) { document.getElementById('count').value = params.get('count'); document.getElementById('count_v').innerText = params.get('count'); }
+        if(params.has('fresh')) { document.getElementById('fresh').value = params.get('fresh'); document.getElementById('fresh_v').innerText = params.get('fresh'); }
+
+        function sendData() {
+            const data = {
                 chat_id: document.getElementById('chat_id').value,
                 freq: document.getElementById('freq').value,
                 count: document.getElementById('count').value,
                 fresh: document.getElementById('fresh').value
-            }));
-            tg.close();
-        };
+            };
+            tg.sendData(JSON.stringify(data));
+        }
     </script>
 </body>
 </html>
