@@ -1,24 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --b: #248bed; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; padding: 15px; }
-        .card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        label { display: block; font-size: 13px; color: #666; font-weight: bold; margin-bottom: 8px; }
-        .val { float: right; color: var(--b); font-size: 16px; }
-        input[type="range"] { width: 100%; accent-color: var(--b); margin-top: 5px; }
-        button { width: 100%; padding: 16px; background: var(--b); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        :root { --main: #248bed; --bg: #f0f2f5; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 15px; margin: 0; color: #222; }
+        .card { background: white; padding: 18px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        label { display: block; font-size: 13px; color: #888; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; }
+        .val { float: right; color: var(--main); font-size: 18px; font-weight: 800; }
+        input[type="range"] { width: 100%; accent-color: var(--main); height: 6px; margin: 10px 0; }
+        button { width: 100%; padding: 18px; background: var(--main); color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 16px; margin-top: 15px; transition: 0.2s; }
+        button:active { transform: scale(0.98); opacity: 0.9; }
     </style>
 </head>
 <body>
     <div class="card"><label>ЧАСТОТА: <span id="fv" class="val">30</span> мин</label><input type="range" id="f" min="1" max="120" oninput="u('f')"></div>
-    <div class="card"><label>ПОСТОВ ЗА РАЗ: <span id="cv" class="val">3</span></label><input type="range" id="c" min="1" max="10" oninput="u('c')"></div>
-    <div class="card"><label>ПАУЗА МЕЖДУ: <span id="dv" class="val">5</span> сек</label><input type="range" id="d" min="1" max="60" oninput="u('d')"></div>
-    <div class="card"><label>АКТУАЛЬНОСТЬ: <span id="sv" class="val">24</span> ч</label><input type="range" id="s" min="1" max="72" oninput="u('s')"></div>
+    <div class="card"><label>ПОСТОВ: <span id="cv" class="val">3</span> шт</label><input type="range" id="c" min="1" max="10" oninput="u('c')"></div>
+    <div class="card"><label>ПАУЗА: <span id="dv" class="val">5</span> сек</label><input type="range" id="d" min="1" max="60" oninput="u('d')"></div>
+    <div class="card"><label>СРОК: <span id="sv" class="val">24</span> ч</label><input type="range" id="s" min="1" max="72" oninput="u('s')"></div>
+    
     <button onclick="send()">✅ ПРИМЕНИТЬ НА ПК</button>
 
     <script>
@@ -26,6 +28,7 @@
         tg.expand();
         const p = new URLSearchParams(window.location.search);
         
+        // Заполнение данных из URL (синхронизация с ПК при открытии)
         ['f','c','d','s'].forEach(k => {
             if(p.has(k)) {
                 document.getElementById(k).value = p.get(k);
@@ -37,10 +40,10 @@
 
         function send() {
             const data = {
-                f: parseInt(document.getElementById('f').value),
-                c: parseInt(document.getElementById('c').value),
-                d: parseInt(document.getElementById('d').value),
-                s: parseInt(document.getElementById('s').value)
+                f: document.getElementById('f').value,
+                c: document.getElementById('c').value,
+                d: document.getElementById('d').value,
+                s: document.getElementById('s').value
             };
             tg.sendData(JSON.stringify(data));
             tg.close();
