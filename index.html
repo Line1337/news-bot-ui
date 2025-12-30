@@ -3,80 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Настройки Бота</title>
+    <title>Настройки</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg: var(--tg-theme-bg-color, #ffffff);
             --text: var(--tg-theme-text-color, #222222);
-            --hint: var(--tg-theme-hint-color, #999999);
             --button: var(--tg-theme-button-color, #248bed);
             --sec-bg: var(--tg-theme-secondary-bg-color, #f4f4f7);
         }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; }
-        .card { background: var(--sec-bg); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(0,0,0,0.05); }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; text-transform: uppercase; opacity: 0.8; }
-        .val { float: right; color: var(--button); font-weight: 800; font-size: 16px; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+        .card { background: var(--sec-bg); padding: 15px; border-radius: 12px; margin-bottom: 12px; }
+        label { display: block; font-weight: bold; font-size: 13px; opacity: 0.7; }
+        .val { float: right; color: var(--button); font-weight: bold; font-size: 18px; }
         input[type="range"] { width: 100%; accent-color: var(--button); margin-top: 10px; }
-        .warning { color: #ff3b30; font-size: 11px; margin-top: 5px; display: none; font-weight: bold; }
-        .btn-apply { width: 100%; padding: 18px; background: var(--button); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn { width: 100%; padding: 16px; background: var(--button); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="card">
         <label>ЧАСТОТА: <span id="freq_v" class="val">30</span> мин</label>
         <input type="range" id="freq" min="1" max="120" value="30" oninput="upd('freq')">
-        <div id="w_freq" class="warning">⚠️ Слишком часто! Риск блокировки.</div>
     </div>
-
     <div class="card">
-        <label>ПОСТОВ ЗА РАЗ: <span id="count_v" class="val">3</span></label>
+        <label>ПОСТОВ: <span id="count_v" class="val">3</span></label>
         <input type="range" id="count" min="1" max="10" value="3" oninput="upd('count')">
     </div>
-
     <div class="card">
         <label>ПАУЗА: <span id="delay_v" class="val">5</span> сек</label>
         <input type="range" id="delay" min="1" max="60" value="5" oninput="upd('delay')">
-        <div id="w_delay" class="warning">⚠️ Малая пауза! Риск блокировки.</div>
     </div>
-
     <div class="card">
         <label>АКТУАЛЬНОСТЬ: <span id="fresh_v" class="val">24</span> ч</label>
         <input type="range" id="fresh" min="1" max="72" value="24" oninput="upd('fresh')">
     </div>
-
-    <button class="btn-apply" onclick="save()">ПРИМЕНИТЬ ИЗМЕНЕНИЯ</button>
+    <button class="btn" onclick="save()">ПРИМЕНИТЬ НА ПК</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        
         const params = new URLSearchParams(window.location.search);
-        let target_id = params.get('target') || "0";
-        let feeds = (params.get('feeds') || "").split("|");
-
-        // Загрузка значений
+        
+        // Загрузка данных при открытии
         ['freq', 'count', 'delay', 'fresh'].forEach(k => {
             if(params.has(k)) {
-                document.getElementById(k).value = params.get(k);
-                upd(k);
+                const val = params.get(k);
+                document.getElementById(k).value = val;
+                document.getElementById(k + '_v').innerText = val;
             }
         });
 
         function upd(id) {
             const v = document.getElementById(id).value;
-            document.getElementById(id+'_val').innerText = v;
-            if(id === 'freq') document.getElementById('w_freq').style.display = v < 5 ? 'block' : 'none';
-            if(id === 'delay') document.getElementById('w_delay').style.display = v < 3 ? 'block' : 'none';
+            document.getElementById(id + '_v').innerText = v;
         }
 
         function save() {
             const data = {
-                target: target_id,
                 freq: parseInt(document.getElementById('freq').value),
                 count: parseInt(document.getElementById('count').value),
                 delay: parseInt(document.getElementById('delay').value),
-                fresh: parseInt(document.getElementById('fresh').value),
-                feeds: feeds
+                fresh: parseInt(document.getElementById('fresh').value)
             };
             tg.sendData(JSON.stringify(data));
             tg.close();
