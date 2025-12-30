@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Настройки News Bot</title>
+    <title>Настройки Бота</title>
     <style>
         :root {
             --bg: var(--tg-theme-bg-color, #1a1a1a);
@@ -12,41 +12,41 @@
             --hint: var(--tg-theme-hint-color, #888);
             --link: var(--tg-theme-link-color, #50a8eb);
         }
-        body { background-color: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; margin: 0; }
-        .card { background: var(--sec-bg); padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        h3 { margin: 0 0 15px 0; font-size: 14px; color: var(--link); text-transform: uppercase; }
-        .field { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; color: var(--hint); margin-bottom: 6px; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 15px; margin: 0; }
+        .card { background: var(--sec-bg); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        h3 { margin: 0 0 15px 0; font-size: 13px; color: var(--hint); text-transform: uppercase; letter-spacing: 1px; }
+        .field { margin-bottom: 15px; position: relative; }
+        label { display: block; font-size: 12px; margin-bottom: 8px; color: var(--hint); }
         input { 
             width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); 
             background: rgba(0,0,0,0.2); color: #fff; font-size: 16px; box-sizing: border-box; outline: none;
         }
         input:focus { border-color: var(--link); }
-        .cur-val { float: right; font-weight: bold; color: var(--link); }
+        .cur-tag { position: absolute; right: 0; top: 0; font-size: 11px; color: var(--link); font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h3>⏱ Время и Частота</h3>
+        <h3>⏱ Тайминги</h3>
         <div class="field">
-            <label>Проверка (мин) <span id="val_check" class="cur-val">-</span></label>
+            <label>Проверка (мин) <span id="v_check" class="cur-tag"></span></label>
             <input type="number" id="check_interval">
         </div>
         <div class="field">
-            <label>Пауза постов (сек) <span id="val_pause" class="cur-val">-</span></label>
+            <label>Пауза постов (сек) <span id="v_pause" class="cur-tag"></span></label>
             <input type="number" id="post_interval">
         </div>
     </div>
 
     <div class="card">
-        <h3>📦 Параметры ленты</h3>
+        <h3>📦 Контент</h3>
         <div class="field">
-            <label>Постов за раз <span id="val_posts" class="cur-val">-</span></label>
+            <label>Постов за раз <span id="v_posts" class="cur-tag"></span></label>
             <input type="number" id="posts_per_check">
         </div>
         <div class="field">
-            <label>Актуальность (ч) <span id="val_age" class="cur-val">-</span></label>
+            <label>Актуальность (ч) <span id="v_age" class="cur-tag"></span></label>
             <input type="number" id="max_age_hours">
         </div>
     </div>
@@ -55,28 +55,26 @@
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-        tg.MainButton.text = "СОХРАНИТЬ И ЗАКРЫТЬ";
+        tg.MainButton.text = "СОХРАНИТЬ ИЗМЕНЕНИЯ";
         tg.MainButton.show();
 
-        // 1. Загрузка данных из URL при открытии
         window.onload = function() {
             const params = new URLSearchParams(window.location.search);
-            const mapping = {
-                'check_interval': 'val_check',
-                'post_interval': 'val_pause',
-                'posts_per_check': 'val_posts',
-                'max_age_hours': 'val_age'
+            const map = {
+                'check_interval': 'v_check',
+                'post_interval': 'v_pause',
+                'posts_per_check': 'v_posts',
+                'max_age_hours': 'v_age'
             };
-            for (let key in mapping) {
-                let val = params.get(key);
+            for (let id in map) {
+                let val = params.get(id);
                 if (val) {
-                    document.getElementById(key).value = val;
-                    document.getElementById(mapping[key]).innerText = val;
+                    document.getElementById(id).value = val;
+                    document.getElementById(map[id]).innerText = "Тек: " + val;
                 }
             }
         };
 
-        // 2. Отправка данных боту
         tg.MainButton.onClick(function() {
             const data = {
                 check_interval: document.getElementById('check_interval').value,
@@ -84,8 +82,8 @@
                 posts_per_check: document.getElementById('posts_per_check').value,
                 max_age_hours: document.getElementById('max_age_hours').value
             };
-            tg.sendData(JSON.stringify(data)); // Отправляет данные боту
-            tg.close(); // Закрывает Mini App (обязательно!)
+            tg.sendData(JSON.stringify(data));
+            tg.close();
         });
     </script>
 </body>
