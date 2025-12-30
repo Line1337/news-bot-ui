@@ -1,50 +1,46 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>News Bot Sync</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: var(--tg-theme-bg-color); --txt: var(--tg-theme-text-color); --btn: var(--tg-theme-button-color); }
-        body { font-family: sans-serif; background: var(--bg); color: var(--txt); padding: 15px; margin: 0; }
-        .card { background: var(--tg-theme-secondary-bg-color); padding: 15px; border-radius: 12px; margin-bottom: 10px; }
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; opacity: 0.6; }
-        .val { float: right; color: var(--btn); font-weight: bold; font-size: 16px; }
-        input[type="range"] { width: 100%; accent-color: var(--btn); }
-        button { width: 100%; padding: 15px; background: var(--btn); color: white; border: none; border-radius: 10px; font-weight: bold; margin-top: 15px; font-size: 16px; }
+        body { font-family: sans-serif; background: #eee; padding: 20px; }
+        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input { width: 100%; }
+        button { width: 100%; padding: 15px; background: #248bed; color: white; border: none; border-radius: 10px; font-weight: bold; }
+        .val { float: right; font-weight: bold; color: #248bed; }
     </style>
 </head>
 <body>
-    <div class="card"><label>ЧАСТОТА: <span id="freq_v" class="val">30</span> мин</label><input type="range" id="freq" min="1" max="120" value="30" oninput="u('freq')"></div>
-    <div class="card"><label>ПОСТОВ: <span id="count_v" class="val">3</span></label><input type="range" id="count" min="1" max="10" value="3" oninput="u('count')"></div>
-    <div class="card"><label>ПАУЗА: <span id="delay_v" class="val">5</span> сек</label><input type="range" id="delay" min="1" max="60" value="5" oninput="u('delay')"></div>
-    <div class="card"><label>АКТУАЛЬНОСТЬ: <span id="fresh_v" class="val">24</span> ч</label><input type="range" id="fresh" min="1" max="72" value="24" oninput="u('fresh')"></div>
-    
-    <button onclick="save()">СОХРАНИТЬ НА ПК</button>
+    <div class="card">Частота: <span id="fv" class="val">30</span><input type="range" id="f" min="1" max="120" oninput="up('f')"></div>
+    <div class="card">Постов: <span id="cv" class="val">3</span><input type="range" id="c" min="1" max="10" oninput="up('c')"></div>
+    <div class="card">Пауза: <span id="dv" class="val">5</span><input type="range" id="d" min="1" max="60" oninput="up('d')"></div>
+    <div class="card">Срок (ч): <span id="sv" class="val">24</span><input type="range" id="s" min="1" max="72" oninput="up('s')"></div>
+    <button onclick="send()">ПРИМЕНИТЬ НА ПК</button>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
         const p = new URLSearchParams(window.location.search);
-        ['freq', 'count', 'delay', 'fresh'].forEach(k => {
-            if(p.has(k)) { 
-                document.getElementById(k).value = p.get(k); 
-                document.getElementById(k+'_v').innerText = p.get(k); 
+        
+        ['f','c','d','s'].forEach(k => {
+            if(p.has(k)) {
+                document.getElementById(k).value = p.get(k);
+                document.getElementById(k+'v').innerText = p.get(k);
             }
         });
 
-        function u(id) { document.getElementById(id+'_v').innerText = document.getElementById(id).value; }
+        function up(id) { document.getElementById(id+'v').innerText = document.getElementById(id).value; }
 
-        function save() {
+        function send() {
             const data = {
-                freq: document.getElementById('freq').value,
-                count: document.getElementById('count').value,
-                delay: document.getElementById('delay').value,
-                fresh: document.getElementById('fresh').value
+                f: parseInt(document.getElementById('f').value),
+                c: parseInt(document.getElementById('c').get().value), // ОШИБКА ТУТ БЫЛА, ИСПРАВЛЕНО НИЖЕ
+                c: parseInt(document.getElementById('c').value),
+                d: parseInt(document.getElementById('d').value),
+                s: parseInt(document.getElementById('s').value)
             };
             tg.sendData(JSON.stringify(data));
-            tg.close();
         }
     </script>
 </body>
