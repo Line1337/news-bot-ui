@@ -3,80 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Настройки Бота</title>
+    <title>Управление Ботом</title>
     <style>
-        :root {
-            --bg-color: var(--tg-theme-bg-color, #1a1a1a);
-            --text-color: var(--tg-theme-text-color, #ffffff);
-            --hint-color: var(--tg-theme-hint-color, #888888);
-            --button-color: var(--tg-theme-button-color, #50a8eb);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2c);
-        }
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: -apple-system, system-ui, sans-serif;
-            padding: 15px;
-            margin: 0;
-        }
-        .section {
-            background: var(--secondary-bg);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        h3 { margin: 0 0 15px 0; font-size: 14px; text-transform: uppercase; color: var(--button-color); letter-spacing: 0.5px; }
-        .field { margin-bottom: 15px; }
-        .field:last-child { margin-bottom: 0; }
-        label { display: block; font-size: 13px; margin-bottom: 8px; color: var(--hint-color); }
-        input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
-            color: #fff;
-            font-size: 16px;
-            box-sizing: border-box;
-            outline: none;
-        }
-        input:focus { border-color: var(--button-color); }
-        .current-tag {
-            float: right;
-            font-size: 11px;
-            background: var(--button-color);
-            color: #fff;
-            padding: 2px 6px;
-            border-radius: 4px;
-            opacity: 0.8;
-        }
+        body { background-color: var(--tg-theme-bg-color, #1a1a1a); color: var(--tg-theme-text-color, #ffffff); font-family: sans-serif; padding: 15px; }
+        .card { background: var(--tg-theme-secondary-bg-color, #2c2c2c); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--tg-theme-button-color, #50a8eb); }
+        label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; }
+        .info { font-size: 11px; color: var(--tg-theme-button-color); margin-bottom: 10px; display: block; }
     </style>
 </head>
 <body>
-
-    <div class="section">
-        <h3>⏱ Частота и Тайминги</h3>
-        <div class="field">
-            <label>Проверка новостей (мин) <span id="tag_check" class="current-tag"></span></label>
-            <input type="number" id="check_interval" placeholder="Напр: 15">
-        </div>
-        <div class="field">
-            <label>Пауза между постами (сек) <span id="tag_pause" class="current-tag"></span></label>
-            <input type="number" id="post_interval" placeholder="Напр: 10">
-        </div>
+    <div class="card">
+        <h3>⏱ ТАЙМИНГИ</h3>
+        <label>Проверка (мин)</label>
+        <span id="cur_check" class="info">Загрузка...</span>
+        <input type="number" id="check_interval">
+        
+        <label>Пауза постов (сек)</label>
+        <span id="cur_pause" class="info">Загрузка...</span>
+        <input type="number" id="post_interval">
     </div>
 
-    <div class="section">
-        <h3>📦 Контент и Фильтры</h3>
-        <div class="field">
-            <label>Кол-во постов за раз <span id="tag_posts" class="current-tag"></span></label>
-            <input type="number" id="posts_per_check" placeholder="Напр: 3">
-        </div>
-        <div class="field">
-            <label>Актуальность (часов) <span id="tag_age" class="current-tag"></span></label>
-            <input type="number" id="max_age_hours" placeholder="Напр: 24">
-        </div>
+    <div class="card">
+        <h3>📦 ПУБЛИКАЦИЯ</h3>
+        <label>Постов за раз</label>
+        <span id="cur_posts" class="info">Загрузка...</span>
+        <input type="number" id="posts_per_check">
+        
+        <label>Актуальность (часов)</label>
+        <span id="cur_age" class="info">Загрузка...</span>
+        <input type="number" id="max_age_hours">
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -86,34 +43,30 @@
         tg.MainButton.text = "СОХРАНИТЬ НА ПК";
         tg.MainButton.show();
 
-        // Авто-заполнение при открытии
         window.onload = function() {
             const params = new URLSearchParams(window.location.search);
-            const config = {
-                'check_interval': 'tag_check',
-                'post_interval': 'tag_pause',
-                'posts_per_check': 'tag_posts',
-                'max_age_hours': 'tag_age'
+            const mapping = {
+                'check_interval': 'cur_check',
+                'post_interval': 'cur_pause',
+                'posts_per_check': 'cur_posts',
+                'max_age_hours': 'cur_age'
             };
-
-            for (let id in config) {
-                let val = params.get(id);
+            for (let key in mapping) {
+                let val = params.get(key);
                 if (val) {
-                    document.getElementById(id).value = val;
-                    document.getElementById(config[id]).innerText = "Сейчас: " + val;
+                    document.getElementById(key).value = val;
+                    document.getElementById(mapping[key]).innerText = "Сейчас на ПК: " + val;
                 }
             }
         };
 
-        // Отправка данных боту
         tg.MainButton.onClick(function() {
-            const data = {
+            tg.sendData(JSON.stringify({
                 check_interval: document.getElementById('check_interval').value,
                 post_interval: document.getElementById('post_interval').value,
                 posts_per_check: document.getElementById('posts_per_check').value,
                 max_age_hours: document.getElementById('max_age_hours').value
-            };
-            tg.sendData(JSON.stringify(data));
+            }));
         });
     </script>
 </body>
