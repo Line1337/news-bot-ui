@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Настройки News Bot</title>
+    <title>Настройки Бота</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -11,101 +11,67 @@
             --text: var(--tg-theme-text-color, #222222);
             --hint: var(--tg-theme-hint-color, #999999);
             --button: var(--tg-theme-button-color, #248bed);
-            --secondary: var(--tg-theme-secondary-bg-color, #f4f4f7);
+            --sec-bg: var(--tg-theme-secondary-bg-color, #f4f4f7);
         }
         body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; }
-        .card { background: var(--secondary); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        .val { float: right; color: var(--button); }
-        input[type="range"] { width: 100%; accent-color: var(--button); }
-        input[type="text"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--hint); background: var(--bg); color: var(--text); box-sizing: border-box; }
+        .card { background: var(--sec-bg); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(0,0,0,0.05); }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; text-transform: uppercase; opacity: 0.8; }
+        .val { float: right; color: var(--button); font-weight: 800; font-size: 16px; }
+        input[type="range"] { width: 100%; accent-color: var(--button); margin-top: 10px; }
         .warning { color: #ff3b30; font-size: 11px; margin-top: 5px; display: none; font-weight: bold; }
-        .feed-item { display: flex; justify-content: space-between; background: var(--bg); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 12px; }
-        .del-btn { color: #ff3b30; cursor: pointer; font-weight: bold; }
-        button.main { width: 100%; padding: 15px; background: var(--button); color: white; border: none; border-radius: 12px; font-weight: bold; margin-top: 10px; }
+        .btn-apply { width: 100%; padding: 18px; background: var(--button); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
     <div class="card">
-        <label>ID ЧАТА</label>
-        <input type="text" id="target" placeholder="-100...">
-    </div>
-
-    <div class="card">
-        <label>ЧАСТОТА ПРОВЕРКИ: <span id="freq_v" class="val">30</span> мин</label>
-        <input type="range" id="freq" min="1" max="120" value="30" oninput="updateVal('freq')">
-        <div id="warn_freq" class="warning">⚠️ Слишком часто! Возможен бан за спам.</div>
+        <label>ЧАСТОТА: <span id="freq_v" class="val">30</span> мин</label>
+        <input type="range" id="freq" min="1" max="120" value="30" oninput="upd('freq')">
+        <div id="w_freq" class="warning">⚠️ Слишком часто! Риск блокировки.</div>
     </div>
 
     <div class="card">
         <label>ПОСТОВ ЗА РАЗ: <span id="count_v" class="val">3</span></label>
-        <input type="range" id="count" min="1" max="10" value="3" oninput="updateVal('count')">
+        <input type="range" id="count" min="1" max="10" value="3" oninput="upd('count')">
     </div>
 
     <div class="card">
-        <label>ПАУЗА МЕЖДУ ПОСТАМИ: <span id="delay_v" class="val">5</span> сек</label>
-        <input type="range" id="delay" min="1" max="60" value="5" oninput="updateVal('delay')">
-        <div id="warn_delay" class="warning">⚠️ Малая пауза! Риск блокировки за флуд.</div>
+        <label>ПАУЗА: <span id="delay_v" class="val">5</span> сек</label>
+        <input type="range" id="delay" min="1" max="60" value="5" oninput="upd('delay')">
+        <div id="w_delay" class="warning">⚠️ Малая пауза! Риск блокировки.</div>
     </div>
 
     <div class="card">
         <label>АКТУАЛЬНОСТЬ: <span id="fresh_v" class="val">24</span> ч</label>
-        <input type="range" id="fresh" min="1" max="72" value="24" oninput="updateVal('fresh')">
+        <input type="range" id="fresh" min="1" max="72" value="24" oninput="upd('fresh')">
     </div>
 
-    <div class="card">
-        <label>ИСТОЧНИКИ</label>
-        <div id="feeds_list"></div>
-        <input type="text" id="new_feed" placeholder="Добавить RSS..." style="margin-top:10px">
-        <button onclick="addFeed()" style="margin-top:5px; width:100%">Добавить</button>
-    </div>
-
-    <button class="main" onclick="sendData()">СИНХРОНИЗИРОВАТЬ С ПК</button>
+    <button class="btn-apply" onclick="save()">ПРИМЕНИТЬ ИЗМЕНЕНИЯ</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        let feeds = [];
-
         const params = new URLSearchParams(window.location.search);
-        // Первичная загрузка данных из ПК через URL
-        if(params.has('data')) {
-            const d = JSON.parse(decodeURIComponent(params.get('data')));
-            document.getElementById('target').value = d.target;
-            ['freq', 'count', 'delay', 'fresh'].forEach(k => {
-                document.getElementById(k).value = d[k];
-                updateVal(k);
-            });
-            feeds = d.feeds || [];
-            renderFeeds();
-        }
+        let target_id = params.get('target') || "0";
+        let feeds = (params.get('feeds') || "").split("|");
 
-        function updateVal(id) {
+        // Загрузка значений
+        ['freq', 'count', 'delay', 'fresh'].forEach(k => {
+            if(params.has(k)) {
+                document.getElementById(k).value = params.get(k);
+                upd(k);
+            }
+        });
+
+        function upd(id) {
             const v = document.getElementById(id).value;
             document.getElementById(id+'_val').innerText = v;
-            // Предупреждения
-            if(id === 'freq') document.getElementById('warn_freq').style.display = v < 5 ? 'block' : 'none';
-            if(id === 'delay') document.getElementById('warn_delay').style.display = v < 3 ? 'block' : 'none';
+            if(id === 'freq') document.getElementById('w_freq').style.display = v < 5 ? 'block' : 'none';
+            if(id === 'delay') document.getElementById('w_delay').style.display = v < 3 ? 'block' : 'none';
         }
 
-        function renderFeeds() {
-            const container = document.getElementById('feeds_list');
-            container.innerHTML = '';
-            feeds.forEach((f, i) => {
-                container.innerHTML += `<div class="feed-item"><span>${f.substring(0,30)}...</span><span class="del-btn" onclick="delFeed(${i})">УДАЛИТЬ</span></div>`;
-            });
-        }
-
-        function addFeed() {
-            const inp = document.getElementById('new_feed');
-            if(inp.value) { feeds.push(inp.value); inp.value = ''; renderFeeds(); }
-        }
-
-        function delFeed(i) { feeds.splice(i, 1); renderFeeds(); }
-
-        function sendData() {
+        function save() {
             const data = {
-                target: document.getElementById('target').value,
+                target: target_id,
                 freq: parseInt(document.getElementById('freq').value),
                 count: parseInt(document.getElementById('count').value),
                 delay: parseInt(document.getElementById('delay').value),
