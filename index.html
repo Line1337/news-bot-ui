@@ -2,25 +2,28 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: #eee; padding: 20px; }
-        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input { width: 100%; }
-        button { width: 100%; padding: 15px; background: #248bed; color: white; border: none; border-radius: 10px; font-weight: bold; }
-        .val { float: right; font-weight: bold; color: #248bed; }
+        :root { --b: #248bed; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; padding: 15px; }
+        .card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        label { display: block; font-size: 13px; color: #666; font-weight: bold; margin-bottom: 8px; }
+        .val { float: right; color: var(--b); font-size: 16px; }
+        input[type="range"] { width: 100%; accent-color: var(--b); margin-top: 5px; }
+        button { width: 100%; padding: 16px; background: var(--b); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="card">Частота: <span id="fv" class="val">30</span><input type="range" id="f" min="1" max="120" oninput="up('f')"></div>
-    <div class="card">Постов: <span id="cv" class="val">3</span><input type="range" id="c" min="1" max="10" oninput="up('c')"></div>
-    <div class="card">Пауза: <span id="dv" class="val">5</span><input type="range" id="d" min="1" max="60" oninput="up('d')"></div>
-    <div class="card">Срок (ч): <span id="sv" class="val">24</span><input type="range" id="s" min="1" max="72" oninput="up('s')"></div>
-    <button onclick="send()">ПРИМЕНИТЬ НА ПК</button>
+    <div class="card"><label>ЧАСТОТА: <span id="fv" class="val">30</span> мин</label><input type="range" id="f" min="1" max="120" oninput="u('f')"></div>
+    <div class="card"><label>ПОСТОВ ЗА РАЗ: <span id="cv" class="val">3</span></label><input type="range" id="c" min="1" max="10" oninput="u('c')"></div>
+    <div class="card"><label>ПАУЗА МЕЖДУ: <span id="dv" class="val">5</span> сек</label><input type="range" id="d" min="1" max="60" oninput="u('d')"></div>
+    <div class="card"><label>АКТУАЛЬНОСТЬ: <span id="sv" class="val">24</span> ч</label><input type="range" id="s" min="1" max="72" oninput="u('s')"></div>
+    <button onclick="send()">✅ ПРИМЕНИТЬ НА ПК</button>
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.expand();
         const p = new URLSearchParams(window.location.search);
         
         ['f','c','d','s'].forEach(k => {
@@ -30,17 +33,17 @@
             }
         });
 
-        function up(id) { document.getElementById(id+'v').innerText = document.getElementById(id).value; }
+        function u(id) { document.getElementById(id+'v').innerText = document.getElementById(id).value; }
 
         function send() {
             const data = {
                 f: parseInt(document.getElementById('f').value),
-                c: parseInt(document.getElementById('c').get().value), // ОШИБКА ТУТ БЫЛА, ИСПРАВЛЕНО НИЖЕ
                 c: parseInt(document.getElementById('c').value),
                 d: parseInt(document.getElementById('d').value),
                 s: parseInt(document.getElementById('s').value)
             };
             tg.sendData(JSON.stringify(data));
+            tg.close();
         }
     </script>
 </body>
