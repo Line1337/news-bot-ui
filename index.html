@@ -3,70 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление Ботом</title>
+    <title>Настройки News Bot</title>
     <style>
-        body { background-color: var(--tg-theme-bg-color, #1a1a1a); color: var(--tg-theme-text-color, #ffffff); font-family: sans-serif; padding: 15px; }
-        .card { background: var(--tg-theme-secondary-bg-color, #2c2c2c); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--tg-theme-button-color, #50a8eb); }
-        label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; }
-        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; }
-        .info { font-size: 11px; color: var(--tg-theme-button-color); margin-bottom: 10px; display: block; }
+        :root {
+            --bg: var(--tg-theme-bg-color, #1a1a1a);
+            --sec-bg: var(--tg-theme-secondary-bg-color, #2c2c2c);
+            --text: var(--tg-theme-text-color, #ffffff);
+            --hint: var(--tg-theme-hint-color, #888);
+            --link: var(--tg-theme-link-color, #50a8eb);
+        }
+        body { background-color: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; margin: 0; }
+        .card { background: var(--sec-bg); padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        h3 { margin: 0 0 15px 0; font-size: 14px; color: var(--link); text-transform: uppercase; }
+        .field { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; color: var(--hint); margin-bottom: 6px; }
+        input { 
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(0,0,0,0.2); color: #fff; font-size: 16px; box-sizing: border-box; outline: none;
+        }
+        input:focus { border-color: var(--link); }
+        .cur-val { float: right; font-weight: bold; color: var(--link); }
     </style>
 </head>
 <body>
+
     <div class="card">
-        <h3>⏱ ТАЙМИНГИ</h3>
-        <label>Проверка (мин)</label>
-        <span id="cur_check" class="info">Загрузка...</span>
-        <input type="number" id="check_interval">
-        
-        <label>Пауза постов (сек)</label>
-        <span id="cur_pause" class="info">Загрузка...</span>
-        <input type="number" id="post_interval">
+        <h3>⏱ Время и Частота</h3>
+        <div class="field">
+            <label>Проверка (мин) <span id="val_check" class="cur-val">-</span></label>
+            <input type="number" id="check_interval">
+        </div>
+        <div class="field">
+            <label>Пауза постов (сек) <span id="val_pause" class="cur-val">-</span></label>
+            <input type="number" id="post_interval">
+        </div>
     </div>
 
     <div class="card">
-        <h3>📦 ПУБЛИКАЦИЯ</h3>
-        <label>Постов за раз</label>
-        <span id="cur_posts" class="info">Загрузка...</span>
-        <input type="number" id="posts_per_check">
-        
-        <label>Актуальность (часов)</label>
-        <span id="cur_age" class="info">Загрузка...</span>
-        <input type="number" id="max_age_hours">
+        <h3>📦 Параметры ленты</h3>
+        <div class="field">
+            <label>Постов за раз <span id="val_posts" class="cur-val">-</span></label>
+            <input type="number" id="posts_per_check">
+        </div>
+        <div class="field">
+            <label>Актуальность (ч) <span id="val_age" class="cur-val">-</span></label>
+            <input type="number" id="max_age_hours">
+        </div>
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-        tg.MainButton.text = "СОХРАНИТЬ НА ПК";
+        tg.MainButton.text = "СОХРАНИТЬ И ЗАКРЫТЬ";
         tg.MainButton.show();
 
+        // 1. Загрузка данных из URL при открытии
         window.onload = function() {
             const params = new URLSearchParams(window.location.search);
             const mapping = {
-                'check_interval': 'cur_check',
-                'post_interval': 'cur_pause',
-                'posts_per_check': 'cur_posts',
-                'max_age_hours': 'cur_age'
+                'check_interval': 'val_check',
+                'post_interval': 'val_pause',
+                'posts_per_check': 'val_posts',
+                'max_age_hours': 'val_age'
             };
             for (let key in mapping) {
                 let val = params.get(key);
                 if (val) {
                     document.getElementById(key).value = val;
-                    document.getElementById(mapping[key]).innerText = "Сейчас на ПК: " + val;
+                    document.getElementById(mapping[key]).innerText = val;
                 }
             }
         };
 
+        // 2. Отправка данных боту
         tg.MainButton.onClick(function() {
-            tg.sendData(JSON.stringify({
+            const data = {
                 check_interval: document.getElementById('check_interval').value,
                 post_interval: document.getElementById('post_interval').value,
                 posts_per_check: document.getElementById('posts_per_check').value,
                 max_age_hours: document.getElementById('max_age_hours').value
-            }));
+            };
+            tg.sendData(JSON.stringify(data)); // Отправляет данные боту
+            tg.close(); // Закрывает Mini App (обязательно!)
         });
     </script>
 </body>
