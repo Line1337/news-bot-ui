@@ -1,60 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Settings</title>
     <style>
-        :root { --main: #248bed; }
-        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; }
-        .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        label { display: block; font-size: 12px; color: #888; font-weight: bold; }
-        .val { float: right; color: var(--main); font-size: 18px; font-weight: bold; }
-        input[type="range"] { width: 100%; accent-color: var(--main); margin-top: 10px; }
-        button { width: 100%; padding: 16px; background: var(--main); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        body {
+            background-color: var(--tg-theme-bg-color, #212121);
+            color: var(--tg-theme-text-color, #ffffff);
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        .container { display: flex; flex-direction: column; gap: 15px; }
+        label { font-size: 14px; color: var(--tg-theme-hint-color, #aaaaaa); }
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background-color: var(--tg-theme-secondary-bg-color, #333);
+            color: var(--tg-theme-text-color, #fff);
+            box-sizing: border-box; 
+            font-size: 16px;
+        }
+        .hint { font-size: 12px; color: #888; margin-top: -10px; margin-bottom: 5px; }
+        h3 { margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
     </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div class="card"><label>ЧАСТОТА: <span id="fv" class="val">30</span></label><input type="range" id="f" min="1" max="120" oninput="u('f')"></div>
-    <div class="card"><label>ПОСТОВ: <span id="cv" class="val">3</span></label><input type="range" id="c" min="1" max="10" oninput="u('c')"></div>
-    <div class="card"><label>ПАУЗА: <span id="dv" class="val">5</span></label><input type="range" id="d" min="1" max="60" oninput="u('d')"></div>
-    <div class="card"><label>СРОК: <span id="sv" class="val">24</span></label><input type="range" id="s" min="1" max="72" oninput="u('s')"></div>
-    
-    <button id="mainBtn" onclick="send()">✅ ПРИМЕНИТЬ НА ПК</button>
+
+    <div class="container">
+        <h3>⏱ Настройки времени</h3>
+        
+        <label>Частота проверки (минут)</label>
+        <input type="number" id="check_interval" min="1" step="1">
+        
+        <label>Интервал между постами (секунд)</label>
+        <input type="number" id="post_interval" min="1" step="1">
+
+        <h3>📦 Публикация</h3>
+        
+        <label>Постов за одну проверку</label>
+        <input type="number" id="posts_per_check" min="1" step="1">
+        
+        <label>Актуальность новостей (часов)</label>
+        <input type="number" id="max_age_hours" min="1" step="1">
+    </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Раскрыть на весь экран
 
-        // Загрузка текущих значений из ссылки
-        const p = new URLSearchParams(window.location.search);
-        ['f','c','d','s'].forEach(k => {
-            if(p.has(k)) {
-                document.getElementById(k).value = p.get(k);
-                document.getElementById(k+'v').innerText = p.get(k);
-            }
-        });
+        // Кнопка "Сохранить" (MainButton) от самого Телеграма
+        tg.MainButton.text = "СОХРАНИТЬ НАСТРОЙКИ";
+        tg.MainButton.show();
 
-        function u(id) { document.getElementById(id+'v').innerText = document.getElementById(id).value; }
-
-        function send() {
-            const data = {
-                f: parseInt(document.getElementById('f').value),
-                c: parseInt(document.getElementById('c').value),
-                d: parseInt(document.getElementById('d').value),
-                s: parseInt(document.getElementById('s').value)
+        // 1. Функция получения параметров из URL (Синхронизация ПК -> Телефон)
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                check_interval: params.get('check_interval'),
+                post_interval: params.get('post_interval'),
+                posts_per_check: params.get('posts_per_check'),
+                max_age_hours: params.get('max_age_hours')
             };
-            
-            // Пытаемся отправить данные боту
-            try {
-                tg.sendData(JSON.stringify(data));
-                // Если мы здесь, значит Telegram принял вызов
-                document.getElementById('mainBtn').innerText = "ОТПРАВЛЕНО!";
-            } catch (e) {
-                alert("Ошибка отправки. Попробуйте открыть через ЛС бота.");
-            }
         }
+
+        // 2. Установка значений при открытии
+        const params = getQueryParams();
+        if (params.check_interval) document.getElementById('check_interval').value = params.check_interval;
+        if (params.post_interval) document.getElementById('post_interval').value = params.post_interval;
+        if (params.posts_per_check) document.getElementById('posts_per_check').value = params.posts_per_check;
+        if (params.max_age_hours) document.getElementById('max_age_hours').value = params.max_age_hours;
+
+        // 3. Отправка данных обратно боту (Телефон -> ПК)
+        Telegram.WebApp.onEvent('mainButtonClicked', function(){
+            const data = {
+                check_interval: parseInt(document.getElementById('check_interval').value),
+                post_interval: parseInt(document.getElementById('post_interval').value),
+                posts_per_check: parseInt(document.getElementById('posts_per_check').value),
+                max_age_hours: parseInt(document.getElementById('max_age_hours').value)
+            };
+            tg.sendData(JSON.stringify(data)); 
+        });
     </script>
 </body>
 </html>
